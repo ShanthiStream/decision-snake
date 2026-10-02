@@ -26,7 +26,9 @@ npm run headless -- --policy llm:gemma4:e2b-it-qat --games 10 --seed 100 --max-s
 
 ## Browser controls
 
-Model (dropdown), mode (Model/Keyboard), speed, seed, endpoint. Arrows/WASD play in keyboard mode.
+Model (dropdown), mode (Model/Keyboard), encoder (`flat` default, `features` nested JSON), Wait switch, speed, seed, endpoint. Arrows/WASD play in keyboard mode. URL params match: `?model=tev1:4b&encoder=features&wait=1`.
+
+Representation matters per model: on the same scenarios `tev1:0.8b` scores 6/8 flat vs 2/8 nested, while `tev1:4b` scores 8/8 nested vs 4/8 flat. The ladder compares all players on `flat`; `tev1:4b` on `features` is the smart-demo recipe (`?model=tev1:4b&encoder=features&wait=1`), reported apart like any non-ladder condition.
 
 ## Recording clips
 

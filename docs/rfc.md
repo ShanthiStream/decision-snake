@@ -29,7 +29,7 @@ A greedy rival makes the arena alive and threatening without a second model call
 
 ### 4. Encoders report facts, never verdicts
 
-Distances, food deltas, flood-fill open space. No "safe"/"danger"/"go here" — the student must learn judgment. Representation matters as much as content: on identical scenarios the 0.8B scored 6/8 from flat text lines but 2/8 from nested JSON, so `flat` is the comparison input and `features` stays for ablations.
+Distances, food deltas, flood-fill open space. No "safe"/"danger"/"go here" — the student must learn judgment. Representation interacts with model size: on identical scenarios `tev1:0.8b` scores 6/8 flat vs 2/8 nested, while `tev1:4b` scores 8/8 nested vs 4/8 flat. `flat` is the comparison input (the student is 0.8B-class); `features` stays for ablations and for showing what the 4B can do (`?model=tev1:4b&encoder=features&wait=1`).
 
 ### 5. Edges wrap (no wall deaths)
 

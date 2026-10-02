@@ -30,7 +30,7 @@
         align-items: flex-start;
         flex-wrap: wrap;
       }
-      canvas { display: block; background: #000; border: 1px solid var(--line); border-radius: 6px; }
+      canvas { display: block; background: #000; border: 2px solid #3a3d5c; border-radius: 8px; }
       .side { width: 380px; display: flex; flex-direction: column; gap: 12px; }
       .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
       .card h2 { margin: 0 0 8px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
@@ -58,6 +58,8 @@
       .error.show { display: block; }
       .error .hint { color: var(--text); margin-top: 4px; }
       .help { color: var(--muted); font-size: 11px; }
+      .check { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+      .check input { width: auto; margin: 0; }
       @media (max-width: 1000px) { .side { width: 100%; max-width: 560px; } }
       @media (max-width: 600px) { .app { padding: 8px; gap: 8px; } }
     </style>
@@ -119,6 +121,10 @@
               <option value="1" selected>1x</option>
               <option value="2">2x</option>
             </select>
+            <label for="encoder">Encoder</label>
+            <select id="encoder"></select>
+            <label for="wait">Wait</label>
+            <label class="check"><input id="wait" type="checkbox" /> wait for the model each step</label>
             <label for="seed">Seed</label>
             <input id="seed" inputmode="numeric" />
             <label for="endpoint">Endpoint</label>
@@ -129,7 +135,7 @@
             <button id="restart">Restart</button>
             <button id="export">Download log</button>
           </div>
-          <p class="help">Arrow keys or WASD play in keyboard mode. The sim never waits for the model: a late answer keeps the heading.</p>
+          <p class="help">Arrow keys or WASD play in keyboard mode. Without Wait, a late answer keeps the heading. With Wait (or <code>?wait=1</code>), the game holds each step until a slow model answers — choices judged, not speed. Not comparable with realtime play.</p>
         </div>
       </div>
     </div>

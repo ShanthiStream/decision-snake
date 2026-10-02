@@ -9,6 +9,11 @@ export function render(ctx: CanvasRenderingContext2D, game: GameState): void {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, W, H);
 
+  // Arena edge: a visible frame around the playfield (edges wrap).
+  ctx.strokeStyle = "#3a3d5c";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(1.5, 1.5, W - 3, H - 3);
+
   // Grid dots.
   ctx.fillStyle = "#14141f";
   for (let x = 0; x < game.width; x++) {

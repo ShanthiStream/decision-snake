@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makePolicy } from "../src/agent/factory.ts";
+import { shouldHold } from "../src/agent/turn.ts";
 import { extractMove, policyNamesForCapabilities } from "../src/agent/llm.ts";
 import { oraclePolicy, scoreOutcome } from "../src/agent/oracle.ts";
 import { greedyChoice } from "../src/agent/policies.ts";
@@ -95,6 +96,16 @@ describe("llm helpers", () => {
   it("routes installed models by capability", () => {
     expect(policyNamesForCapabilities("tev1:0.8b", ["decision"])).toEqual(["tev1:0.8b"]);
     expect(policyNamesForCapabilities("qwen3.5:2b", ["completion"])).toEqual(["llm:qwen3.5:2b", "llm-think:qwen3.5:2b"]);
+  });
+});
+
+describe("shouldHold", () => {
+  it("holds AI games waiting on the current tick, nothing else", () => {
+    expect(shouldHold("ai", true, "playing", -1, 0)).toBe(true);
+    expect(shouldHold("ai", true, "playing", 0, 0)).toBe(false);
+    expect(shouldHold("ai", false, "playing", -1, 0)).toBe(false);
+    expect(shouldHold("human", true, "playing", -1, 0)).toBe(false);
+    expect(shouldHold("ai", true, "dead", -1, 0)).toBe(false);
   });
 });
 

@@ -25,3 +25,10 @@
 - Added `flat` encoder (same facts as lines), now the default comparison input; `features` kept for ablations. All 34 tests green.
 - Tested every installed model (lockstep, seed 100): qwen3.5:2b 0 food/dies ~18, MiniCPM5 0/~18, LFM2.5 56/56 unparseable (ignores the JSON schema, writes essays), gemma4:e2b-it-qat 1 food/88 ticks ~950 ms — the only seeker.
 - Default is now `llm:gemma4:e2b-it-qat` (browser, scripts, `.env.example`, guides). Slow (~1 s/decision, expect stale realtime) but it hunts. tev1:0.8b stays as the distillation baseline. HUD now shows the last choice for logprob-less models instead of "waiting…".
+
+### tev1:4b understands food — on nested JSON, untimed (fixed)
+
+- Probe (same 4 scenarios ×2): tev1:4b nested 8/8 vs flat 4/8 — the exact inverse of tev1:0.8b (flat 6/8 vs nested 2/8). Representation interacts with model size; the ladder stays on `flat` (the student is 0.8B-class).
+- Proof in-game: tev1:4b + `features` + lockstep, seed 100: 2 food, full 60-tick survival, 0 failures. Browser equivalent: `?model=tev1:4b&encoder=features&wait=1` (new Wait switch holds each step for slow models; new encoder dropdown; scripted policies pin `features` regardless).
+- Latency on this M1 Air is noisy (first requests 3–7 s cold, ~0.5–1 s warm) — another reason slow models need Wait/lockstep here.
+- Also: canvas now has a drawn arena frame + stronger CSS border (favicon added earlier).

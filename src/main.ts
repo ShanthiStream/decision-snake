@@ -2,7 +2,9 @@ import { DecisionApiError } from "./agent/client.ts";
 import { llmPolicy, policyNamesForCapabilities } from "./agent/llm.ts";
 import { greedyPolicy, randomPolicy, systemOnePolicy, type Policy, type PolicyDecision } from "./agent/policies.ts";
 import { oraclePolicy } from "./agent/oracle.ts";
+import { shouldHold } from "./agent/turn.ts";
 import { DEFAULT_ENCODER, ENCODERS } from "./encoders/index.ts";
+import type { Encoder } from "./encoders/types.ts";
 import { optionToInput } from "./encoders/types.ts";
 import { createGame, STEP_MS, step } from "./engine/arena.ts";
 import { opposite } from "./engine/rival.ts";
@@ -18,6 +20,9 @@ const config = {
   mode: (params.get("mode") ?? "ai") as "ai" | "human",
   model: params.get("model") ?? import.meta.env.VITE_DEFAULT_MODEL ?? "llm:gemma4:e2b-it-qat",
   speed: Number(params.get("speed") ?? "1"),
+  encoder: params.get("encoder") ?? DEFAULT_ENCODER,
+  /** Hold the game until the model's answer for the current tick arrives (for slow models). */
+  waitForModel: params.get("wait") === "1",
   endpoint: params.get("endpoint") ?? defaultEndpoint,
   seed: Number(params.get("seed") ?? Math.floor(Math.random() * 1e6)),
 };
@@ -39,6 +44,8 @@ interface DecisionRecord {
 const records: DecisionRecord[] = [];
 let lastRecord: DecisionRecord | null = null;
 let inFlight = false;
+/** Tick of the latest answer; consumed (-1) once it steers a Wait-mode step. */
+let answeredTick = -1;
 
 // ---- canvas ------------------------------------------------------------------
 const canvas = $<HTMLCanvasElement>("game");
@@ -69,7 +76,9 @@ async function ask(): Promise<void> {
   if (inFlight || paused || config.mode !== "ai" || game.phase !== "playing") return;
   inFlight = true;
   const askedTick = game.tick;
-  const enc = (ENCODERS[DEFAULT_ENCODER] ?? ENCODERS.features).encode(game);
+  // Scripted policies read a fixed encoding regardless of the UI choice.
+  const encoder: Encoder = ENCODERS[policy.requiresEncoder ?? config.encoder] ?? ENCODERS[DEFAULT_ENCODER];
+  const enc = encoder.encode(game);
   const started = performance.now();
   try {
     const d: PolicyDecision = await policy.decide(enc, undefined, game);
@@ -81,8 +90,9 @@ async function ask(): Promise<void> {
       showError(`Model answered "${d.choice}" (options: ${enc.keys.join(", ")}). Keeping the heading.`);
       return;
     }
-    const stale = game.tick > askedTick;
+    const stale = !config.waitForModel && game.tick > askedTick;
     pending = choice as Dir;
+    answeredTick = askedTick;
     lastRecord = {
       tick: askedTick,
       choice,
@@ -112,18 +122,24 @@ function frame(now: number): void {
   const dt = Math.min(500, now - last);
   last = now;
   if (!paused) {
-    acc += dt * config.speed;
-    let steps = 0;
-    while (acc >= STEP_MS && steps < 5 && game.phase === "playing") {
-      const dir = pending ?? undefined;
-      pending = null;
-      step(game, dir ? { dir } : {});
-      acc -= STEP_MS;
-      steps++;
-      tickTimes.push(now);
+    if (shouldHold(config.mode, config.waitForModel, game.phase, answeredTick, game.tick)) {
+      // Slow model still thinking: hold the whole game, ghosts and timers included.
+      acc = 0;
+    } else {
+      acc += dt * config.speed;
+      let steps = 0;
+      while (acc >= STEP_MS && steps < 5 && game.phase === "playing") {
+        const dir = pending ?? undefined;
+        pending = null;
+        step(game, dir ? { dir } : {});
+        acc -= STEP_MS;
+        steps++;
+        tickTimes.push(now);
+        if (config.waitForModel) answeredTick = -1;
+      }
+      if (steps === 5) acc = 0;
     }
-    if (steps === 5) acc = 0;
-    if (config.mode === "ai" && game.phase === "playing" && !inFlight) void ask();
+    if (config.mode === "ai" && game.phase === "playing" && !inFlight && answeredTick !== game.tick) void ask();
   }
   while (tickTimes.length && now - tickTimes[0] > 2000) tickTimes.shift();
   render(ctx, game);
@@ -138,7 +154,8 @@ function pct(xs: number[], p: number): number {
 
 function updateHud(): void {
   $("score").textContent = String(game.player.food);
-  $("ticks").textContent = String(game.tick);
+  const holding = shouldHold(config.mode, config.waitForModel, game.phase, answeredTick, game.tick);
+  $("ticks").textContent = holding ? `${game.tick} (waiting)` : String(game.tick);
   $("rival").textContent = game.rival.alive ? String(game.rival.food) : `dead (${game.rival.respawnIn})`;
   $("tps").textContent = (tickTimes.length / 2).toFixed(1);
   $("who").textContent = config.mode === "ai" ? config.model : "keyboard";
@@ -250,6 +267,8 @@ function setModel(value: string): void {
   if (![...sel.options].some((o) => o.value === value)) sel.add(new Option(value, value));
   sel.value = value;
   policy = makePolicy(value);
+  pending = null;
+  answeredTick = -1;
   records.length = 0;
   lastRecord = null;
   hideError();
@@ -258,6 +277,7 @@ function setModel(value: string): void {
 function restart(): void {
   game = createGame(Math.floor(Math.random() * 1e6));
   pending = null;
+  answeredTick = -1;
   records.length = 0;
   lastRecord = null;
   hideError();
@@ -268,16 +288,26 @@ function togglePause(): void {
   $("pause").textContent = paused ? "Resume" : "Pause";
 }
 
+function setWaitForModel(value: boolean): void {
+  config.waitForModel = value;
+  answeredTick = -1;
+  pending = null;
+  $<HTMLInputElement>("wait").checked = value;
+}
+
 function setupControls(): void {
   const mode = $<HTMLSelectElement>("mode");
   const model = $<HTMLSelectElement>("model");
+  const encoder = $<HTMLSelectElement>("encoder");
   const speed = $<HTMLSelectElement>("speed");
   const seed = $<HTMLInputElement>("seed");
   const endpoint = $<HTMLInputElement>("endpoint");
 
+  for (const name of Object.keys(ENCODERS)) encoder.add(new Option(name, name));
   setModelOptions(KNOWN_MODELS);
   mode.value = config.mode;
   model.value = config.model;
+  encoder.value = config.encoder;
   speed.value = String(config.speed);
   seed.value = String(config.seed);
   endpoint.value = config.endpoint;
@@ -295,12 +325,20 @@ function setupControls(): void {
   speed.onchange = () => {
     config.speed = Number(speed.value);
   };
+  encoder.onchange = () => {
+    config.encoder = encoder.value;
+    lastRecord = null;
+  };
+  const wait = $<HTMLInputElement>("wait");
+  wait.checked = config.waitForModel;
+  wait.onchange = () => setWaitForModel(wait.checked);
   seed.onchange = () => {
     const n = Number(seed.value);
     if (Number.isInteger(n)) {
       config.seed = n;
       game = createGame(n);
       pending = null;
+      answeredTick = -1;
       records.length = 0;
       lastRecord = null;
     }
@@ -330,6 +368,9 @@ requestAnimationFrame(frame);
 (window as unknown as { __snake: object }).__snake = {
   get game() {
     return game;
+  },
+  setWaitForModel(value: boolean) {
+    setWaitForModel(value);
   },
   records,
   setModel(value: string) {
