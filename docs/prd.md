@@ -6,8 +6,8 @@ A visual, real-time snake arena driven by a local decision model — the fast, w
 
 ## Requirements (M1: playable arena)
 
-1. **Arena.** 24×24 grid, fixed 250 ms step. Player snake (model/human) + 1 scripted rival (greedy food-chaser, respawns 20 steps after death). One food at a time, contested.
-2. **Deaths.** Wall, own body, rival body. Single life per game; games end on death or a 3-minute cap.
+1. **Arena.** 24×24 grid, fixed 500 ms step (2x selector for faster setups). Player snake (model/human) + 1 scripted rival (greedy food-chaser, respawns 20 steps after death). One food at a time, contested.
+2. **Deaths.** Own body, rival body. Edges wrap (no wall deaths — weak models must survive to be watchable). Single life per game; games end on death or a 3-minute cap.
 3. **Decisions every tick.** Options = non-reverse directions (up to 3). The sim never waits: slow/failed answers keep the heading (lockstep clock available for quality-only measurement).
 4. **Players.** Any `/v1/systemone` decision model, `llm:`/`llm-think:` chat models, scripted `random`/`greedy`, human (arrows/WASD).
 5. **Headless eval.** Seeded games with JSONL logs (food, ticks survived, latency). Same engine as the browser.

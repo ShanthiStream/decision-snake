@@ -1,16 +1,15 @@
-import { add, DIRS, opposite } from "../engine/rival.ts";
+import { add, DIRS, opposite, wrapCell } from "../engine/rival.ts";
 import type { Dir, GameState, Vec } from "../engine/types.ts";
 import type { EncodedDecision, Encoder } from "./types.ts";
 
 const INSTRUCTIONS = [
-  "You steer a snake one cell per step. Walls, your body, and the rival's body kill you.",
-  "Your tail tip moves away unless you eat this step. Reversing is illegal and ignored.",
-  "Eat food to grow and score. The rival chases the same food and respawns.",
-  "Reply with the direction to head.",
+  "You steer a snake one cell per step. Edges wrap around: there are no wall deaths.",
+  "Your body and the rival's body kill you. Your tail tip moves away unless you eat this step.",
+  "Reversing is illegal and ignored. Eat food to grow and score.",
+  "The rival chases the same food and respawns. Reply with the direction to head.",
 ].join(" ");
 
 export interface DirFacts {
-  wallDist: number;
   selfDist: number;
   rivalDist: number;
   foodDist: number;
@@ -22,33 +21,44 @@ function key(v: Vec): string {
   return `${v.x},${v.y}`;
 }
 
-/** Steps from the head in `dir` until hitting a cell in `blocked` or a wall. */
+/** Free cells straight ahead in `dir` until a cell in `blocked`; edges wrap. */
 function rayDist(s: GameState, from: Vec, dir: Dir, blocked: Set<string>): number {
   let dist = 0;
-  let v = add(from, DIRS[dir]);
-  while (v.x >= 0 && v.y >= 0 && v.x < s.width && v.y < s.height && !blocked.has(key(v))) {
+  let v = from;
+  const max = s.width + s.height;
+  while (dist < max) {
+    v = wrapCell(s, add(v, DIRS[dir]));
+    if (blocked.has(key(v))) break;
     dist++;
-    v = add(v, DIRS[dir]);
   }
   return dist;
 }
 
-/** Reachable free cells from `from` (flood fill, capped), walls and bodies block. */
+/** Reachable free cells from `from` (flood fill, capped); bodies block, edges wrap. */
 function floodArea(s: GameState, from: Vec, blocked: Set<string>, cap = 200): number {
-  if (from.x < 0 || from.y < 0 || from.x >= s.width || from.y >= s.height || blocked.has(key(from))) return 0;
-  const seen = new Set<string>([key(from)]);
-  const stack: Vec[] = [from];
+  const start = wrapCell(s, from);
+  if (blocked.has(key(start))) return 0;
+  const seen = new Set<string>([key(start)]);
+  const stack: Vec[] = [start];
   while (stack.length && seen.size < cap) {
     const v = stack.pop()!;
     for (const d of Object.values(DIRS)) {
-      const n = add(v, d);
+      if (seen.size >= cap) break;
+      const n = wrapCell(s, add(v, d));
       const k = key(n);
-      if (n.x < 0 || n.y < 0 || n.x >= s.width || n.y >= s.height || blocked.has(k) || seen.has(k)) continue;
+      if (blocked.has(k) || seen.has(k)) continue;
       seen.add(k);
       stack.push(n);
     }
   }
   return seen.size;
+}
+
+/** Manhattan distance with wrapped edges. */
+export function wrapFoodDist(s: GameState, from: Vec): number {
+  const dx = Math.abs(from.x - s.food.x);
+  const dy = Math.abs(from.y - s.food.y);
+  return Math.min(dx, s.width - dx) + Math.min(dy, s.height - dy);
 }
 
 export function legalDirs(s: GameState): Dir[] {
@@ -57,7 +67,7 @@ export function legalDirs(s: GameState): Dir[] {
 
 export function dirFacts(s: GameState, dir: Dir): DirFacts {
   const head = s.player.body[0];
-  const target = add(head, DIRS[dir]);
+  const target = wrapCell(s, add(head, DIRS[dir]));
   const grows = target.x === s.food.x && target.y === s.food.y;
   // Mirror the engine: a vacating tail tip is free.
   const selfBody = new Set<string>();
@@ -67,10 +77,9 @@ export function dirFacts(s: GameState, dir: Dir): DirFacts {
   const rivalBody = new Set<string>(rivalCells.map(key));
   const blocked = new Set<string>([...selfBody, ...rivalBody]);
   return {
-    wallDist: rayDist(s, head, dir, new Set()),
     selfDist: rayDist(s, head, dir, selfBody),
     rivalDist: s.rival.alive ? rayDist(s, head, dir, rivalBody) : 99,
-    foodDist: Math.abs(target.x - s.food.x) + Math.abs(target.y - s.food.y),
+    foodDist: wrapFoodDist(s, target),
     eatsFood: grows,
     openArea: floodArea(s, target, blocked),
   };

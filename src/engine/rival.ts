@@ -31,24 +31,24 @@ export function occupiedCells(s: GameState): Set<string> {
   return cells;
 }
 
-function hitWall(s: GameState, v: Vec): boolean {
-  return v.x < 0 || v.y < 0 || v.x >= s.width || v.y >= s.height;
+export function wrapCell(s: GameState, v: Vec): Vec {
+  return { x: ((v.x % s.width) + s.width) % s.width, y: ((v.y % s.height) + s.height) % s.height };
 }
 
-/** Non-reverse directions that do not hit a wall or a body immediately. */
+/** Non-reverse directions that do not hit a body immediately. Edges wrap. */
 export function safeDirs(s: GameState, snake: Snake, bodies?: Set<string>): string[] {
   const blocked = bodies ?? occupiedCells(s);
   const out: string[] = [];
   for (const d of Object.keys(DIRS) as Dir[]) {
     if (d === opposite(snake.dir)) continue;
-    const n = add(snake.body[0], DIRS[d]);
+    const n = wrapCell(s, add(snake.body[0], DIRS[d]));
     // Own tail tip moves away unless growing; treat it as free here.
     const tail = snake.body[snake.body.length - 1];
     if (key(n) === key(tail)) {
-      if (!hitWall(s, n)) out.push(d);
+      out.push(d);
       continue;
     }
-    if (!hitWall(s, n) && !blocked.has(key(n))) out.push(d);
+    if (!blocked.has(key(n))) out.push(d);
   }
   return out;
 }

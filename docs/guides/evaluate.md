@@ -1,6 +1,6 @@
 # Evaluate
 
-Ladder: 10 games on seeds 100–109, 250 ms steps, 3-minute cap per game, realtime clock, `features` input, no lookahead.
+Ladder: 10 games on seeds 100–109, 500 ms steps, 3-minute cap per game, realtime clock, `features` input, no lookahead.
 
 ```bash
 npm run headless -- --policy <name> --games 10 --seed 100 --max-seconds 180

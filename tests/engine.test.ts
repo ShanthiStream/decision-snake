@@ -56,7 +56,7 @@ describe("step", () => {
     expect(s.phase).toBe("playing");
   });
 
-  it("dies on walls", () => {
+  it("wraps around edges instead of dying", () => {
     const s = tiny();
     s.player.body = [
       { x: 9, y: 5 },
@@ -64,8 +64,10 @@ describe("step", () => {
       { x: 7, y: 5 },
     ];
     s.player.dir = "right";
+    s.food = { x: 0, y: 0 };
     step(s, {});
-    expect(s.phase).toBe("dead");
+    expect(s.phase).toBe("playing");
+    expect(s.player.body[0]).toEqual({ x: 0, y: 5 });
   });
 
   it("dies on its own body", () => {
@@ -112,12 +114,17 @@ describe("step", () => {
 describe("rival", () => {
   it("dies with no safe cell", () => {
     const s = createGame(1);
-    // Head boxed in: walls on two sides, own body on the third.
+    // Head ringed by its own body on every side (edges wrap, so no corners);
+    // the tail is far away, so the vacating-tip rule offers no escape.
     s.rival.body = [
-      { x: 0, y: 0 },
-      { x: 1, y: 0 },
-      { x: 1, y: 1 },
-      { x: 0, y: 1 },
+      { x: 5, y: 5 },
+      { x: 5, y: 4 },
+      { x: 5, y: 6 },
+      { x: 4, y: 5 },
+      { x: 6, y: 5 },
+      { x: 10, y: 10 },
+      { x: 11, y: 10 },
+      { x: 12, y: 10 },
     ];
     s.rival.dir = "up";
     s.food = { x: 0, y: 9 };

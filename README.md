@@ -1,6 +1,6 @@
 # Decision Snake
 
-A local decision model steers a snake in a canvas arena in real time (250 ms steps) against a scripted rival, choosing among the legal directions every tick through Ollama's `/v1/systemone` API. Sister project of decision-pacman: same agent stack and distillation pipeline, applied to a faster, more visual game.
+A local decision model steers a snake in a canvas arena in real time (500 ms steps) against a scripted rival, choosing among the legal directions every tick through Ollama's `/v1/systemone` API. Sister project of decision-pacman: same agent stack and distillation pipeline, applied to a faster, more visual game.
 
 ## Quickstart
 

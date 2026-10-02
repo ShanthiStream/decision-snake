@@ -22,16 +22,21 @@ describe("features encoder", () => {
     for (const word of BANNED) expect(lower).not.toContain(word);
   });
 
-  it("sees a wall ahead", () => {
+  it("wraps edges: food across the edge is adjacent", () => {
     const s = createGame(3, { width: 10, height: 10 });
+    s.rival.alive = false;
+    s.rival.body = [];
     s.player.body = [
       { x: 9, y: 5 },
       { x: 8, y: 5 },
       { x: 7, y: 5 },
     ];
     s.player.dir = "right";
-    expect(dirFacts(s, "right").wallDist).toBe(0);
-    expect(dirFacts(s, "up").wallDist).toBeGreaterThan(0);
+    s.food = { x: 0, y: 5 };
+    const cross = dirFacts(s, "right");
+    expect(cross.eatsFood).toBe(true);
+    expect(cross.foodDist).toBe(0);
+    expect(cross.openArea).toBeGreaterThan(50);
   });
 
   it("flags eating and counts open space", () => {
@@ -51,7 +56,7 @@ describe("features encoder", () => {
     expect(eat.openArea).toBeGreaterThan(50);
   });
 
-  it("sees traps: one free cell scores 1, a wall scores 0", () => {
+  it("sees traps: a one-cell pocket scores 1", () => {
     const s = createGame(3, { width: 10, height: 10 });
     s.rival.alive = false;
     s.rival.body = [];
@@ -69,13 +74,6 @@ describe("features encoder", () => {
     s.player.dir = "down";
     s.food = { x: 0, y: 0 };
     expect(dirFacts(s, "down").openArea).toBe(1);
-    s.player.body = [
-      { x: 9, y: 5 },
-      { x: 8, y: 5 },
-      { x: 7, y: 5 },
-    ];
-    s.player.dir = "right";
-    expect(dirFacts(s, "right").openArea).toBe(0);
   });
 });
 

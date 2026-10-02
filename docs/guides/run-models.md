@@ -18,7 +18,7 @@ npm run headless -- --policy tev1:0.8b --games 10 --seed 100 --max-seconds 180
 
 ## Baselines and labeling players
 
-- `random` / `greedy` (greedy: seeks food, avoids walls/bodies).
+- `random` / `greedy` (greedy: seeks food, avoids bodies; edges wrap).
 - `oracle-*`: greedy-rollout search. Labels data, never a ladder player.
 - `teacher*`: chat teacher over `TEACHER_BASE_URL` / `TEACHER_MODEL`.
 

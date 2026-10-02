@@ -15,9 +15,9 @@ import time
 import urllib.request
 
 INSTRUCTIONS = (
-    "You steer a snake one cell per step. Walls, your body, and the rival's body kill you. "
-    "Your tail tip moves away unless you eat this step. Eat food to grow and score. "
-    "Reply with the direction to head."
+    "You steer a snake one cell per step. Edges wrap around: there are no wall deaths. "
+    "Your body and the rival's body kill you. Your tail tip moves away unless you eat this step. "
+    "Eat food to grow and score. Reply with the direction to head."
 )
 
 
@@ -41,37 +41,37 @@ def scenarios(j):
     # Open field, food to the right.
     s = scenario_base(j)
     s["options"] = {
-        "up": {"wallDist": 5, "selfDist": 9, "rivalDist": 9, "foodDist": 8 + d, "eatsFood": False, "openArea": 200},
-        "right": {"wallDist": 15, "selfDist": 9, "rivalDist": 9, "foodDist": 2 + d, "eatsFood": False, "openArea": 200},
-        "down": {"wallDist": 18, "selfDist": 9, "rivalDist": 9, "foodDist": 8 + d, "eatsFood": False, "openArea": 200},
+        "up": {"selfDist": 9, "rivalDist": 9, "foodDist": 8 + d, "eatsFood": False, "openArea": 200},
+        "right": {"selfDist": 9, "rivalDist": 9, "foodDist": 2 + d, "eatsFood": False, "openArea": 200},
+        "down": {"selfDist": 9, "rivalDist": 9, "foodDist": 8 + d, "eatsFood": False, "openArea": 200},
     }
     scenarios.append(("open-field", s, "right"))
-    # Wall directly ahead; food is up.
+    # Food across the right edge: wrapping right is the shortcut.
     s = scenario_base(j)
-    s["food"] = {"x": 22, "y": 2}
+    s["food"] = {"x": 1 + (j % 2), "y": 5}
     s["options"] = {
-        "up": {"wallDist": 5, "selfDist": 9, "rivalDist": 9, "foodDist": 3, "eatsFood": False, "openArea": 200},
-        "right": {"wallDist": 0, "selfDist": 9, "rivalDist": 9, "foodDist": 5, "eatsFood": False, "openArea": 0},
-        "down": {"wallDist": 18, "selfDist": 9, "rivalDist": 9, "foodDist": 9, "eatsFood": False, "openArea": 200},
+        "up": {"selfDist": 9, "rivalDist": 9, "foodDist": 8, "eatsFood": False, "openArea": 200},
+        "right": {"selfDist": 9, "rivalDist": 9, "foodDist": 2, "eatsFood": False, "openArea": 200},
+        "down": {"selfDist": 9, "rivalDist": 9, "foodDist": 8, "eatsFood": False, "openArea": 200},
     }
-    scenarios.append(("wall-ahead", s, "up"))
+    scenarios.append(("wrap-shortcut", s, "right"))
     # Pocket to the right (1 cell), open field left.
     s = scenario_base(j)
     s["heading"] = "up"
     s["food"] = {"x": 2, "y": 5}
     s["options"] = {
-        "left": {"wallDist": 5, "selfDist": 9, "rivalDist": 9, "foodDist": 3, "eatsFood": False, "openArea": 190},
-        "up": {"wallDist": 5, "selfDist": 9, "rivalDist": 9, "foodDist": 7, "eatsFood": False, "openArea": 180},
-        "right": {"wallDist": 4, "selfDist": 9, "rivalDist": 9, "foodDist": 9, "eatsFood": False, "openArea": 1},
+        "left": {"selfDist": 9, "rivalDist": 9, "foodDist": 3, "eatsFood": False, "openArea": 190},
+        "up": {"selfDist": 9, "rivalDist": 9, "foodDist": 7, "eatsFood": False, "openArea": 180},
+        "right": {"selfDist": 9, "rivalDist": 9, "foodDist": 9, "eatsFood": False, "openArea": 1},
     }
     scenarios.append(("trap-right", s, "left"))
     # Rival body immediately right; food is up.
     s = scenario_base(j)
     s["food"] = {"x": 5, "y": 2}
     s["options"] = {
-        "up": {"wallDist": 5, "selfDist": 9, "rivalDist": 9, "foodDist": 3, "eatsFood": False, "openArea": 200},
-        "right": {"wallDist": 15, "selfDist": 9, "rivalDist": 0, "foodDist": 5, "eatsFood": False, "openArea": 150},
-        "down": {"wallDist": 18, "selfDist": 9, "rivalDist": 9, "foodDist": 7, "eatsFood": False, "openArea": 200},
+        "up": {"selfDist": 9, "rivalDist": 9, "foodDist": 3, "eatsFood": False, "openArea": 200},
+        "right": {"selfDist": 9, "rivalDist": 0, "foodDist": 5, "eatsFood": False, "openArea": 150},
+        "down": {"selfDist": 9, "rivalDist": 9, "foodDist": 7, "eatsFood": False, "openArea": 200},
     }
     scenarios.append(("rival-right", s, "up"))
     return scenarios

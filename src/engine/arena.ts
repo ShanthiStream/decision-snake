@@ -2,9 +2,11 @@ import { nextRandom } from "./rng.ts";
 import { add, DIRS, occupiedCells, opposite, rivalHeading } from "./rival.ts";
 import type { Dir, GameOptions, GameState, Snake, Vec } from "./types.ts";
 
-// 250 ms steps (4 cells/s): a ~350 ms 0.8B answers within ~1.4 steps, so small
-// models stay playable while slower ones still pay an honest staleness cost.
-export const STEP_MS = 250;
+// 500 ms steps (2 cells/s): every installed model answers within one step
+// (tev1:0.8b needs ~370 ms here), so the default game is playable. Faster
+// setups can use the 2x speed selector. Slower models still pay an honest
+// staleness cost, measured, not hidden.
+export const STEP_MS = 500;
 export const RIVAL_RESPAWN_STEPS = 20;
 
 function key(v: Vec): string {
@@ -61,15 +63,14 @@ export function createGame(seed: number, options: GameOptions = {}): GameState {
   return s;
 }
 
-function hitWall(s: GameState, v: Vec): boolean {
-  return v.x < 0 || v.y < 0 || v.x >= s.width || v.y >= s.height;
+export function wrap(s: GameState, v: Vec): Vec {
+  return { x: ((v.x % s.width) + s.width) % s.width, y: ((v.y % s.height) + s.height) % s.height };
 }
 
-/** Moves a snake one cell against an explicit body list for the other snake. */
-function moveSnake(s: GameState, snake: Snake, dir: Dir, otherBody: Vec[]): "ok" | "ate" | "wall" | "self" | "rival" {
+/** Moves a snake one cell against an explicit body list for the other snake. Edges wrap. */
+function moveSnake(s: GameState, snake: Snake, dir: Dir, otherBody: Vec[]): "ok" | "ate" | "self" | "rival" {
   snake.dir = dir;
-  const head = add(snake.body[0], DIRS[dir]);
-  if (hitWall(s, head)) return "wall";
+  const head = wrap(s, add(snake.body[0], DIRS[dir]));
   const ate = head.x === s.food.x && head.y === s.food.y;
   const body = ate ? snake.body : snake.body.slice(0, -1);
   for (const c of body) if (c.x === head.x && c.y === head.y) return "self";
@@ -100,7 +101,7 @@ export function step(s: GameState, input: { dir?: Dir }): void {
   const rivalBody = r.alive ? (rivalGrows ? r.body : r.body.slice(0, -1)) : [];
 
   const result = moveSnake(s, p, p.dir, rivalBody);
-  if (result === "wall" || result === "self" || result === "rival") {
+  if (result === "self" || result === "rival") {
     s.phase = "dead";
     s.events.push(`player died: ${result} at tick ${s.tick}`);
     return;
@@ -118,7 +119,7 @@ export function step(s: GameState, input: { dir?: Dir }): void {
     const heading = rivalHeading(s, r);
     const playerBody = result === "ate" ? p.body : p.body.slice(0, -1);
     const rResult = moveSnake(s, r, heading, playerBody);
-    if (rResult === "wall" || rResult === "self" || rResult === "rival") {
+    if (rResult === "self" || rResult === "rival") {
       r.alive = false;
       r.respawnIn = RIVAL_RESPAWN_STEPS;
       r.body = [];
