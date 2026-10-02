@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Visual snake arena where a local decision model (`/v1/systemone`, default `tev1:0.8b` on Ollama) steers a canvas snake in real time against a scripted rival, plus the usual pipeline (teacher labels → 0.8B distill → ladder). Sister project of decision-pacman/duel: same agent stack, but every tick is a decision (no junctions) on a fixed 500 ms step. Read `docs/prd.md` and `docs/rfc.md` before changing architecture. Public GitHub repo, English only.
+Visual snake arena where a local model (default `llm:gemma4:e2b-it-qat` on Ollama — the only installed model that seeks food zero-shot) steers a canvas snake in real time against a scripted rival, plus the usual pipeline (teacher labels → 0.8B distill → ladder). Sister project of decision-pacman/duel: same agent stack, but every tick is a decision (no junctions) on a fixed 500 ms step. Read `docs/prd.md` and `docs/rfc.md` before changing architecture. Public GitHub repo, English only.
 
 ## Commands
 

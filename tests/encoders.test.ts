@@ -4,11 +4,43 @@ import { DEFAULT_ENCODER, ENCODERS } from "../src/encoders/index.ts";
 import { optionToInput } from "../src/encoders/types.ts";
 import { createGame } from "../src/engine/arena.ts";
 
+describe("flat encoder", () => {
+  it("is the default and covers the same options as features", () => {
+    expect(DEFAULT_ENCODER).toBe("flat");
+    const s = createGame(3);
+    const flat = ENCODERS.flat.encode(s);
+    const feat = ENCODERS.features.encode(s);
+    expect(flat.keys).toEqual(feat.keys);
+    expect(typeof flat.state).toBe("string");
+    for (const k of flat.keys) expect(flat.state as string).toContain(`- ${k}:`);
+  });
+
+  it("stays under a token budget and states facts, never verdicts", () => {
+    const text = JSON.stringify(ENCODERS.flat.encode(createGame(3)));
+    expect(text.length).toBeLessThan(2000);
+    const lower = text.toLowerCase();
+    for (const word of BANNED) expect(lower).not.toContain(word);
+  });
+
+  it("flags eating in plain words", () => {
+    const s = createGame(3, { width: 10, height: 10 });
+    s.rival.alive = false;
+    s.rival.body = [];
+    s.player.body = [
+      { x: 4, y: 5 },
+      { x: 3, y: 5 },
+      { x: 2, y: 5 },
+    ];
+    s.player.dir = "right";
+    s.food = { x: 5, y: 5 };
+    expect(ENCODERS.flat.encode(s).state as string).toContain("EATS the food");
+  });
+});
+
 const BANNED = ["safe", "danger", "recommend", "best", "should go", "go up", "avoid"];
 
 describe("features encoder", () => {
-  it("is the default and offers the non-reverse directions", () => {
-    expect(DEFAULT_ENCODER).toBe("features");
+  it("offers the non-reverse directions", () => {
     const s = createGame(3); // heading right
     expect(legalDirs(s).sort()).toEqual(["down", "right", "up"]);
     const enc = ENCODERS.features.encode(s);

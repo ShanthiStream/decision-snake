@@ -17,9 +17,9 @@ loadDotEnv();
 
 const { values: args } = parseArgs({
   options: {
-    policy: { type: "string", default: "tev1:0.8b" },
+    policy: { type: "string", default: "llm:gemma4:e2b-it-qat" },
     "base-url": { type: "string" },
-    encoder: { type: "string", default: "features" },
+    encoder: { type: "string", default: "flat" },
     clock: { type: "string", default: "realtime" },
     games: { type: "string", default: "3" },
     seed: { type: "string", default: "100" },

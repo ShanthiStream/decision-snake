@@ -18,7 +18,7 @@ const { values: args } = parseArgs({
   options: {
     player: { type: "string", default: "oracle-30t" },
     labeler: { type: "string", default: "oracle-30t" },
-    encoder: { type: "string", default: "features" },
+    encoder: { type: "string", default: "flat" },
     "also-encode": { type: "string", default: "" },
     games: { type: "string", default: "1" },
     seed: { type: "string", default: "1000" },

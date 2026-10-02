@@ -18,3 +18,10 @@
 - Decision logs showed a second layer: even fresh, the model marched away from food (0 food, probe 2/8) — genuine weak judgment, plus a flood-fill cap overshoot (areas of 201 vs cap 200, fixed with an inner break).
 - Fix (RFC 5): the arena is now toroidal — edges wrap, deaths come only from bodies. Encoder went wrap-aware (rays, flood, toroidal food distance); `wallDist` dropped. STEP_MS 250 → 500 so installed models fit inside one step.
 - After: tev1:0.8b survives full 60 s games (0 failures), greedy eats 6/60 s, browser verified visually (both snakes growing, rival scoring, zero console errors, favicon added). Model still plays dumb (0 food) — intelligence is M3's distillation job; the game no longer dies to prove it.
+
+### Why the model snake ignored food (fixed by switching defaults)
+
+- tev1:0.8b chose "right" 126/126 in-game. Consistent EATS-up state (food 0 away, flagged) still answered "right" 0.66 vs up 0.19, deterministic across retries: a heading-momentum prior it cannot override zero-shot. Nested JSON probed 2/8, flat text 6/8 — representation helped but did not fix seeking.
+- Added `flat` encoder (same facts as lines), now the default comparison input; `features` kept for ablations. All 34 tests green.
+- Tested every installed model (lockstep, seed 100): qwen3.5:2b 0 food/dies ~18, MiniCPM5 0/~18, LFM2.5 56/56 unparseable (ignores the JSON schema, writes essays), gemma4:e2b-it-qat 1 food/88 ticks ~950 ms — the only seeker.
+- Default is now `llm:gemma4:e2b-it-qat` (browser, scripts, `.env.example`, guides). Slow (~1 s/decision, expect stale realtime) but it hunts. tev1:0.8b stays as the distillation baseline. HUD now shows the last choice for logprob-less models instead of "waiting…".

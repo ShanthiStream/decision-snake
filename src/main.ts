@@ -16,7 +16,7 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 const defaultEndpoint = import.meta.env.DEV ? "/decide" : (import.meta.env.VITE_DECISION_BASE_URL ?? "http://localhost:11434");
 const config = {
   mode: (params.get("mode") ?? "ai") as "ai" | "human",
-  model: params.get("model") ?? import.meta.env.VITE_DEFAULT_MODEL ?? "tev1:0.8b",
+  model: params.get("model") ?? import.meta.env.VITE_DEFAULT_MODEL ?? "llm:gemma4:e2b-it-qat",
   speed: Number(params.get("speed") ?? "1"),
   endpoint: params.get("endpoint") ?? defaultEndpoint,
   seed: Number(params.get("seed") ?? Math.floor(Math.random() * 1e6)),
@@ -161,6 +161,11 @@ function updateHud(): void {
       bars.appendChild(row);
     }
     $("state-view").textContent = `tick ${lastRecord.tick}${lastRecord.stale ? " (stale)" : ""} → ${lastRecord.choice}`;
+  } else if (lastRecord) {
+    // Models without logprobs (e.g. gemma chat models) give no probability bars.
+    $("confidence").textContent = "";
+    $("who").textContent = `${config.model} chose ${lastRecord.choice}`;
+    $("state-view").textContent = `tick ${lastRecord.tick}${lastRecord.stale ? " (stale)" : ""} → ${lastRecord.choice} (no probabilities)`;
   } else {
     $("confidence").textContent = "";
     $("state-view").textContent = config.mode === "ai" ? "waiting for the first decision..." : "-";

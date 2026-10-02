@@ -12,7 +12,7 @@ import { createServer } from "vite";
 
 const { values: args } = parseArgs({
   options: {
-    model: { type: "string", default: "tev1:0.8b" },
+    model: { type: "string", default: "llm:gemma4:e2b-it-qat" },
     seed: { type: "string", default: "100" },
     speed: { type: "string", default: "1" },
     seconds: { type: "string", default: "30" },

@@ -7,12 +7,12 @@ A local decision model steers a snake in a canvas arena in real time (500 ms ste
 Requirements: Node 20+, Ollama 0.35+.
 
 ```bash
-ollama pull tev1:0.8b
+ollama pull gemma4:e2b-it-qat
 npm install
 npm run dev            # open http://localhost:5175
 ```
 
-Switch models in the side panel, or pass `?model=tev1:4b`. Arrow keys / WASD play human mode.
+Switch models in the side panel, or pass `?model=tev1:0.8b`. Arrow keys / WASD play human mode. (`tev1:0.8b` plays but rarely seeks food zero-shot — see `docs/working.md`; it is the distillation baseline.)
 
 ## Headless eval
 

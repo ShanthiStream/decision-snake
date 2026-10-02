@@ -3,14 +3,16 @@
 ## Local decision models (Ollama /v1/systemone)
 
 ```bash
-ollama pull tev1:0.8b
+ollama pull gemma4:e2b-it-qat
 npm install
-npm run dev            # http://localhost:5175/?model=tev1:0.8b
+npm run dev            # http://localhost:5175/?model=llm:gemma4:e2b-it-qat
 ```
 
 ```bash
-npm run headless -- --policy tev1:0.8b --games 10 --seed 100 --max-seconds 180
+npm run headless -- --policy llm:gemma4:e2b-it-qat --games 10 --seed 100 --max-seconds 180
 ```
+
+`tev1:0.8b` also plays (fast, ~350 ms) but circles without seeking food zero-shot — it is the distillation baseline, not the demo. `LFM2.5` ignores the JSON schema (essays instead of answers) and cannot play.
 
 ## Plain chat models (llm: / llm-think:)
 

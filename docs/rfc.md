@@ -7,7 +7,7 @@ A deterministic TypeScript arena steps on a fixed 500 ms clock. An async agent l
 ## Components
 
 - `src/engine/`: `types.ts`, `arena.ts` (`createGame`, `step`), `rival.ts` (scripted greedy chaser), `rng.ts` (mulberry32 on the state).
-- `src/encoders/`: `features` (per-direction self/rival distances, wrapped food distance, flood-fill open space; never verdicts), `types.ts`.
+- `src/encoders/`: `flat` (default comparison input: the same per-direction facts as flat text lines), `features` (nested-JSON twin for ablations; never verdicts in either), `types.ts`.
 - `src/agent/`: `client.ts`, `llm.ts` (`llm:`/`llm-think:` + capability routing), `policies.ts` (random, greedy, systemOne), `factory.ts`, `oracle.ts` (greedy-rollout search; labels only), `teacher.ts` (peek = rollout futures).
 - `src/sim/runner.ts`: realtime (latency → ticks) + lockstep clocks, labeler + alsoEncode support.
 - `src/render/canvas.ts`, `src/main.ts`: canvas snakes/food/grid, HUD (score, latency, probabilities), error panel, human input. Read state, never mutate rules.
@@ -29,7 +29,7 @@ A greedy rival makes the arena alive and threatening without a second model call
 
 ### 4. Encoders report facts, never verdicts
 
-Distances, food deltas, flood-fill open space. No "safe"/"danger"/"go here" — the student must learn judgment.
+Distances, food deltas, flood-fill open space. No "safe"/"danger"/"go here" — the student must learn judgment. Representation matters as much as content: on identical scenarios the 0.8B scored 6/8 from flat text lines but 2/8 from nested JSON, so `flat` is the comparison input and `features` stays for ablations.
 
 ### 5. Edges wrap (no wall deaths)
 
